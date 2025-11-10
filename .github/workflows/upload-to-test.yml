@@ -1,0 +1,74 @@
+name: "發佈至-測試環境"
+
+on:
+  push:
+    branches: [test]
+  workflow_dispatch:
+
+env:
+  # 儲存庫相關設定
+  APP_NAME: "" # TODO: 應用名稱，要佈署服務的應用程式名稱
+  APP_NAME_PREFIX: "" # TODO: 應用名稱，要佈署服務的應用程式名稱前綴
+  BRANCH_NAME: test # TODO: 分支名稱
+  ACTION_ACCESS_TOKEN: "" # 存取別的儲存庫的 PAT
+  EVENT_TYPE: "deploy-static-file-to-gcs" # TODO: 觸發共用部署工作流程名稱
+  # GCP相關設定
+  GCP_PROJECT_ID: "" # TODO: 更新 gcp 專案id ${{ vars.ORG_GCP_PROJECT_ID_TADA_CANADA }}
+  GCP_TOKEN_KEY_NAME: "" # TODO: 更新 gcp 專案金鑰名稱 ORG_GKE_KEY_FILE_TADA_CANADA
+  # 個別應用設定
+  GCS_BUCKET_NAME: ""
+  IGNORE_PATH_LIST: ""
+  LOCAL_UPLOAD_PATH: "public"
+
+jobs:
+  deploy:
+    name: 觸發共用部署工作流程
+    runs-on:
+      group: OLD_TS_WEB_RUNNER_GROUP
+
+    steps:
+      # 此步驟會將產生出的 token 寫到環境變數 env.ACTION_ACCESS_TOKEN 裡
+      - name: Generate a token
+        uses: old-ts-web/share-action-generate-deploy-workflow-token@v2
+        with:
+          app-id: ${{ vars.ORG_IGS_OLD_TS_BOT_APP_ID }}
+          private-key: ${{ secrets.ORG_IGS_OLD_TS_BOT_KEY }}
+
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ env.ACTION_ACCESS_TOKEN }}
+          script: |
+            const {
+              APP_NAME,
+              APP_NAME_PREFIX,
+              EVENT_TYPE,
+              BRANCH_NAME,
+              GCP_PROJECT_ID,
+              GCP_TOKEN_KEY_NAME,
+              GCS_BUCKET_NAME,
+              LOCAL_UPLOAD_PATH,
+              IGNORE_PATH_LIST,
+            } = process.env
+
+            github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: 'share-deploy-workflow',
+              event_type: EVENT_TYPE,
+              client_payload: {
+                meta: {
+                  ACTOR: context.actor,
+                  APP_NAME,
+                  APP_NAME_PREFIX,
+                  BRANCH_NAME,
+                  WORKFLOW: context.workflow,
+                  RUN_NUMBER: context.runNumber,
+                },
+                setting: {
+                  GCP_PROJECT_ID,
+                  GCP_TOKEN_KEY_NAME,
+                  GCS_BUCKET_NAME,
+                  LOCAL_UPLOAD_PATH,
+                  IGNORE_PATH_LIST,
+                },
+              }
+            })
