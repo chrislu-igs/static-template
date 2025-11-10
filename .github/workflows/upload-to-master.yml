@@ -14,7 +14,7 @@ env:
   GCP_PROJECT_ID: "" # TODO: 更新 gcp 專案id ${{ vars.ORG_GCP_PROJECT_ID_TADA_CANADA }}
   GCP_TOKEN_KEY_NAME: "" # TODO: 更新 gcp 專案金鑰名稱 ORG_GKE_KEY_FILE_TADA_CANADA
   # 個別應用設定
-  GCS_BUCKET_NAME: ""
+  GCS_BUCKET_NAME: "" # TODO: GCS 儲存桶名稱 gs://production-tdw-web-cdn
   IGNORE_PATH_LIST: ""
   LOCAL_UPLOAD_PATH: "public"
 
